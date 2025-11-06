@@ -1,67 +1,98 @@
-import java.util.*;
-
-class Process {
-    int id;
-    int arrival;
-    int burst;
-    int completion;
-    int waiting;
-    int turnaround;
-    
-    Process(int id, int arrival, int burst) {
-        this.id = id;
-        this.arrival = arrival;
-        this.burst = burst;
-    }
-}
+import java.util.Scanner;
 
 public class SimpleScheduler {
+    
+    static class ProcessInfo {
+        int processId;
+        int arrivalTime;
+        int burstTime;
+        int completionTime;
+        int turnaroundTime;
+        int waitingTime;
+        
+        ProcessInfo(int pid, int at, int bt) {
+            this.processId = pid;
+            this.arrivalTime = at;
+            this.burstTime = bt;
+        }
+    }
+    
     public static void main(String[] args) {
-        Scanner sc = new Scanner(System.in);
+        Scanner scanner = new Scanner(System.in);
+        
         System.out.print("Enter number of processes: ");
-        int n = sc.nextInt();
-        Process[] processes = new Process[n];
-       
-        for (int i = 0; i < n; i++) {
-            System.out.print("Enter process ID (integer) for process " + (i + 1) + ": ");
-            int id = sc.nextInt();
-            System.out.print("Enter arrival time for process " + id + ": ");
-            int arrival = sc.nextInt();
-            System.out.print("Enter burst time for process " + id + ": ");
-            int burst = sc.nextInt();
-            processes[i] = new Process(id, arrival, burst);
+        int numProcesses = scanner.nextInt();
+        
+        ProcessInfo[] processList = new ProcessInfo[numProcesses];
+        
+        // Input process details
+        for (int i = 0; i < numProcesses; i++) {
+            System.out.print("Enter process ID for process " + (i + 1) + ": ");
+            int pid = scanner.nextInt();
+            
+            System.out.print("Enter arrival time for process " + pid + ": ");
+            int at = scanner.nextInt();
+            
+            System.out.print("Enter burst time for process " + pid + ": ");
+            int bt = scanner.nextInt();
+            
+            processList[i] = new ProcessInfo(pid, at, bt);
         }
         
-        // Sort processes by arrival time
-        Arrays.sort(processes, Comparator.comparingInt(p -> p.arrival));
+        // Sort by arrival time (bubble sort)
+        for (int i = 0; i < numProcesses - 1; i++) {
+            for (int j = 0; j < numProcesses - i - 1; j++) {
+                if (processList[j].arrivalTime > processList[j + 1].arrivalTime) {
+                    ProcessInfo temp = processList[j];
+                    processList[j] = processList[j + 1];
+                    processList[j + 1] = temp;
+                }
+            }
+        }
         
-        int time = 0;
+        // Calculate times
+        int currentTime = 0;
         int totalTurnaround = 0;
         int totalWaiting = 0;
         
-        System.out.println("\nProcessID\tArrival\tBurst\tCompletion\tTurnaround\tWaiting");
-        
-        for (Process p : processes) {
-            if (time < p.arrival) {
-                time = p.arrival;
-            }
-            time += p.burst;
-            p.completion = time;
-            p.turnaround = p.completion - p.arrival;
-            p.waiting = p.turnaround - p.burst;
-            totalTurnaround += p.turnaround;
-            totalWaiting += p.waiting;
+        for (int i = 0; i < numProcesses; i++) {
+            ProcessInfo proc = processList[i];
             
-            System.out.println(p.id + "\t\t" + p.arrival + "\t" + p.burst + "\t" + 
-                             p.completion + "\t\t" + p.turnaround + "\t\t" + p.waiting);
+            if (currentTime < proc.arrivalTime) {
+                currentTime = proc.arrivalTime;
+            }
+            
+            currentTime += proc.burstTime;
+            proc.completionTime = currentTime;
+            proc.turnaroundTime = proc.completionTime - proc.arrivalTime;
+            proc.waitingTime = proc.turnaroundTime - proc.burstTime;
+            
+            totalTurnaround += proc.turnaroundTime;
+            totalWaiting += proc.waitingTime;
         }
         
-        double avgTurnaround = totalTurnaround / (double) n;
-        double avgWaiting = totalWaiting / (double) n;
+        // Display results
+        System.out.println("\n================================================================================");
+        System.out.println("                        FCFS SCHEDULING RESULTS");
+        System.out.println("================================================================================");
+        System.out.println("PID\tArrival\tBurst\tCompletion\tTurnaround\tWaiting");
+        System.out.println("--------------------------------------------------------------------------------");
         
-        System.out.printf("\nAverage Turnaround Time: %.2f\n", avgTurnaround);
-        System.out.printf("Average Waiting Time: %.2f\n", avgWaiting);
+        for (int i = 0; i < numProcesses; i++) {
+            ProcessInfo proc = processList[i];
+            System.out.println(proc.processId + "\t" + proc.arrivalTime + "\t" + 
+                             proc.burstTime + "\t" + proc.completionTime + "\t\t" + 
+                             proc.turnaroundTime + "\t\t" + proc.waitingTime);
+        }
         
-        sc.close();
+        System.out.println("================================================================================");
+        
+        double avgTurnaround = (double) totalTurnaround / numProcesses;
+        double avgWaiting = (double) totalWaiting / numProcesses;
+        
+        System.out.println("\nAverage Turnaround Time: " + String.format("%.2f", avgTurnaround));
+        System.out.println("Average Waiting Time: " + String.format("%.2f", avgWaiting));
+        
+        scanner.close();
     }
 }
